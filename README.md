@@ -22,5 +22,8 @@ where
 3. If pubkey isn't belong to node, there will be some errors.
 4. If cluster is `-ul` (also this is the default value) you will not see last rewards. Planning to read cluster from *config get*.
 
+## Appreciation
+Part of `see schedule block` (shows estimated time of scheduled slots of node) modified from https://github.com/Vahhhh/solana/blob/main/see-schedule.sh - BIG THANKS!!!
+
 ## Example
 ![My TDS node](/example1.png "My TDS node info")
