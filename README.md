@@ -17,10 +17,10 @@ where
 `<CLUSTER_ABBREVIATED>` - `-ut` or `-ud` or `-um` or `-ul` for cluster
 
 ## Known issues:
-1. Long time of execution. Planning to make progress bar for estimated time.
-2. If you have poor internet connection, there can be errors while script executes some commands (error of time out)
-3. If pubkey isn't belong to node, there will be some errors.
-4. If cluster is `-ul` (also this is the default value) you will not see last rewards. Planning to read cluster from *config get*.
+1. **Long time of execution**. Planning to make progress bar for estimated time.
+2. **If you have poor internet connection**, there can be errors while script executes some commands (error of time out)
+3. **If pubkey isn't belong to node**, there will be some errors.
+4. **If cluster is `-ul`** (also this is the default value) you will not see last rewards. Planning to read cluster from *config get*.
 
 ## Appreciation
 Part of `see schedule block` (shows estimated time of scheduled slots of node) modified from https://github.com/Vahhhh/solana/blob/main/see-schedule.sh - BIG THANKS!!!
