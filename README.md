@@ -23,4 +23,4 @@ where
 4. If cluster is `-ul` (also this is the default value) you will not see last rewards. Planning to read cluster from *config get*.
 
 ## Example
-![My TDS node](screenshots/example1.png "My TDS node info")
+![My TDS node](/example1.png "My TDS node info")
