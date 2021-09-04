@@ -7,7 +7,8 @@
 2. `chmod u+x ./show-solana-node-info.sh`
 3. `./show-solana-node-info.sh` - if you run this script on your node
 
-## You can use it on any instance with installed solana and to see information of any node in solana blockchain:
+## You can use it on any instance with installed solana,
+and you can to see information of any node in solana blockchain:
 
 `./show-solana-node-info.sh <NODE_PUBKEY> <CLUSTER_ABBREVIATED>`
 <NODE_PUBKEY> - pubkey of any node
