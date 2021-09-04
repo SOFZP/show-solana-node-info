@@ -13,7 +13,7 @@ and you can to see information of any node in solana blockchain:
 `./show-solana-node-info.sh <NODE_PUBKEY> <CLUSTER_ABBREVIATED>`
 
 where
-`<NODE_PUBKEY>` - pubkey of any node
+`<NODE_PUBKEY>` - pubkey of any node, 
 `<CLUSTER_ABBREVIATED>` - `-ut` or `-ud` or `-um` or `-ul` for cluster
 
 ## Known issues:
