@@ -134,7 +134,7 @@ COLOR_SFDP_STATUS=`
 SFDP_STATUS_STRING=`echo -e "State: ${COLOR_SFDP_STATUS}${SFDP_STATUS}${NOCOLOR}"`
 SFDP=`solana-foundation-delegation-program status ${THIS_SOLANA_ADRESS} | grep -v "State: "`
 
-NODE_WITHDRAW_AUTHORITY=`solana ${SOLANA_CLUSTER} vote-account ${YOUR_VOTE_ACCOUNT} | grep 'Withdraw Authority: ' | sed 's/Withdraw Authority: //g' | tr -s ' ' | awk {print}`
+NODE_WITHDRAW_AUTHORITY=`solana ${SOLANA_CLUSTER} vote-account ${YOUR_VOTE_ACCOUNT} | grep 'Withdraw' | awk '{print $NF}'`
 
 TOTAL_ACTIVE_STAKE=`solana ${SOLANA_CLUSTER} stakes ${YOUR_VOTE_ACCOUNT} | grep 'Active Stake' | sed 's/Active Stake: //g' | sed 's/ SOL//g' | awk '{n += $1}; END{print n}'`
 TOTAL_STAKE_COUNT=`solana ${SOLANA_CLUSTER} stakes ${YOUR_VOTE_ACCOUNT} | grep 'Active Stake' | sed 's/Active Stake: //g' | sed 's/ SOL//g' | grep '' -c`
@@ -197,7 +197,7 @@ COLOR_LAST_BLOCK=`
       echo "${GREEN}"
     fi`
 	
-LAST_REWARDS=`solana ${SOLANA_CLUSTER} vote-account --with-rewards --num-rewards-epochs 3 ${YOUR_VOTE_ACCOUNT} | grep -A10 'Reward Slot' | sed 's/Reward Slot/Reward_Slot/g' | awk '{print $1"\t"$2"\t"$3}'`
+LAST_REWARDS=`solana ${SOLANA_CLUSTER} vote-account --with-rewards --num-rewards-epochs 5 ${YOUR_VOTE_ACCOUNT} | grep -A10 'Reward Slot' | sed 's/Reward Slot/Reward_Slot/g' | awk '{print $1"\t"$2"\t"$3}'`
 
 
 echo -e "${GREEN}"
