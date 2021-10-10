@@ -60,7 +60,7 @@ function slotDate () {
 function slotColor() {
   local SLOT=${1}
   local COLOR=`
-    if (( ${SLOT} <= ${CURRENT_SLOT} )); then
+    if (( ${SLOT:-0} <= ${CURRENT_SLOT:-0} )); then
       echo "${RED}old< "
     else
       echo "${GREEN}new> "
@@ -87,8 +87,8 @@ function see_shedule() {
 	local EPOCH_LEN_SEC=$(durationToSeconds "${EPOCH_LEN_TEXT}")
 	local SLOT_LEN_SEC=`echo "scale=10; ${EPOCH_LEN_SEC}/(${LAST_SLOT}-${FIRST_SLOT})" | bc`
 	local SLOT_PER_SEC=`echo "scale=10; 1.0/${SLOT_LEN_SEC}" | bc`
-	local COMPLETED_SLOTS=`echo -e "${SCHEDULE}" | awk -v cs="${CURRENT_SLOT}" '{ if ($1 <= cs) { print }}' | wc -l`
-	local REMAINING_SLOTS=`echo -e "${SCHEDULE}" | awk -v cs="${CURRENT_SLOT}" '{ if ($1 > cs) { print }}' | wc -l`
+	local COMPLETED_SLOTS=`echo -e "${SCHEDULE}" | awk -v cs="${CURRENT_SLOT:-0}" '{ if ( ! -z "$1" ) if ($1 <= cs) { print }}' | wc -l`
+	local REMAINING_SLOTS=`echo -e "${SCHEDULE}" | awk -v cs="${CURRENT_SLOT:-0}" '{ if ( ! -z "$1" ) if ($1 > cs) { print }}' | wc -l`
 	local TOTAL_SLOTS=`echo -e "${SCHEDULE}" | wc -l`
 
 	echo "${NOW}"
@@ -175,14 +175,14 @@ CLUSTER_CREDITS=`echo -e "$SUM_CLUSTER_CREDITS" "$COUNT_CLUSTER_VALIDATORS" | aw
 
 CLUSTER_SKIP=`echo -e "${SOLANA_VALIDATORS}" | grep 'Average Stake-Weighted Skip Rate' | sed 's/  */ /g' | cut -d ' ' -f 5 | cut -d '%' -f 1`
 
-ALL_SLOTS=`solana ${SOLANA_CLUSTER} leader-schedule | grep ${THIS_SOLANA_ADRESS} -c`
+ALL_SLOTS=`solana ${SOLANA_CLUSTER} leader-schedule | grep ${THIS_SOLANA_ADRESS} -c | awk '{if ($1==0) print 1; else print $1;}'`
 SKIPPED_COUNT=`solana ${SOLANA_CLUSTER} -v block-production | grep ${THIS_SOLANA_ADRESS} | grep SKIPPED -c`
 NON_SKIPPED_COUNT=`solana ${SOLANA_CLUSTER} -v block-production | grep ${THIS_SOLANA_ADRESS} | grep SKIPPED -v -c | awk '{ if ($1 > 0) print $1-1; else print 0; fi}'`
 
 SCHEDULE1=`solana ${SOLANA_CLUSTER} leader-schedule | grep ${THIS_SOLANA_ADRESS} | tr -s ' ' | cut -d' ' -f2`
 CURRENT_SLOT1=`echo -e "$EPOCH_INFO" | grep "Slot: " | cut -d ':' -f 2 | cut -d ' ' -f 2`
-COMPLETED_SLOTS1=`echo -e "${SCHEDULE1}" | awk -v cs1="${CURRENT_SLOT1}" '{ if ($1 <= cs1) { print }}' | wc -l`
-REMAINING_SLOTS1=`echo -e "${SCHEDULE1}" | awk -v cs1="${CURRENT_SLOT1}" '{ if ($1 > cs1) { print }}' | wc -l`
+COMPLETED_SLOTS1=`echo -e "${SCHEDULE1}" | awk -v cs1="${CURRENT_SLOT1:-0}" '{ if ( ! -z "$1" ) if ($1 <= cs1) { print }}' | wc -l`
+REMAINING_SLOTS1=`echo -e "${SCHEDULE1}" | awk -v cs1="${CURRENT_SLOT1:-0}" '{ if ( ! -z "$1" ) if ($1 > cs1) { print }}' | wc -l`
 
 YOUR_SKIPRATE=`solana ${SOLANA_CLUSTER} -v block-production | grep ${THIS_SOLANA_ADRESS} | sed -n -e 1p | sed 's/  */ /g' | sed '/^#\|^$\| *#/d' | cut -d ' ' -f 6 | cut -d '%' -f 1 | awk '{print $1}'`
 
@@ -264,44 +264,51 @@ else
   echo -e "${RED}Your skiprate: ${YOUR_SKIPRATE:-0}% (Bad) - Done: ${NON_SKIPPED_COUNT:-0}, Skipped: ${SKIPPED_COUNT:-0}${NOCOLOR}"
 fi
 
-echo "Your Slots ${COMPLETED_SLOTS1}/${ALL_SLOTS} (${REMAINING_SLOTS1} remaining)"
+if (("${COMPLETED_SLOTS1:-0}" != '1' && "${ALL_SLOTS:-0}" != '1')); then
+
+	echo "Your Slots ${COMPLETED_SLOTS1:-0}/${ALL_SLOTS:-0} (${REMAINING_SLOTS1:-0} remaining)"
 
 
-#min-skip
-if (( $(bc<<<"scale=2;${SKIPPED_COUNT:-0}*100/${ALL_SLOTS:-1} <= ${CLUSTER_SKIP:-0}+30") )); then
-	echo -e "Your Min-Possible Skiprate is ${GREEN}$(bc<<<"scale=2;${SKIPPED_COUNT:-0}*100/${ALL_SLOTS:-1}")%${NOCOLOR} (if all remaining slots will be done)"
+	#min-skip
+	if (( $(bc<<<"scale=2;${SKIPPED_COUNT:-0}*100/${ALL_SLOTS:-1} <= ${CLUSTER_SKIP:-0}+30") )); then
+		echo -e "Your Min-Possible Skiprate is ${GREEN}$(bc<<<"scale=2;${SKIPPED_COUNT:-0}*100/${ALL_SLOTS:-1}")%${NOCOLOR} (if all remaining slots will be done)"
+	else
+		echo -e "Your Min-Possible Skiprate is ${RED}$(bc<<<"scale=2;${SKIPPED_COUNT:-0}*100/${ALL_SLOTS:-1}")%${NOCOLOR} (if all remaining slots will be done)"
+	fi
+
+	#max-skip
+	if (( $(bc<<<"scale=2;(${ALL_SLOTS:-0}-${NON_SKIPPED_COUNT:-0})*100/${ALL_SLOTS:-1} <= ${CLUSTER_SKIP:-0}+30") )); then
+		echo -e "Your Max-Possible Skiprate is ${GREEN}$(bc<<<"scale=2;(${ALL_SLOTS:-0}-${NON_SKIPPED_COUNT:-0})*100/${ALL_SLOTS:-1}")%${NOCOLOR} (if all remaining slots will be skipped)"
+	else
+		echo -e "Your Max-Possible Skiprate is ${RED}$(bc<<<"scale=2;(${ALL_SLOTS:-0}-${NON_SKIPPED_COUNT:-0})*100/${ALL_SLOTS:-1}")%${NOCOLOR} (if all remaining slots will be skipped)"
+	fi
+
+
+
+	echo -e "${CYAN}"
+	echo -e "Block Production ${NOCOLOR}"
+
+	if (( $(bc<<<"scale=2;${COMPLETED_SLOTS1:-0} > 0"))); then
+		echo -e "Last Block: ${COLOR_LAST_BLOCK}${LAST_BLOCK} ${LAST_BLOCK_STATUS}${NOCOLOR}"
+	else
+		echo -e "This node did not produce any blocks yet"
+	fi
+
+	if (( $(bc<<<"scale=2;${REMAINING_SLOTS1:-0} > 0"))); then
+		echo -e "Nearest Slots (4 blocks each):"
+		echo -e "${GREEN}${NEAREST_SLOTS}${NOCOLOR}"
+	else
+		echo -e "This node will not have new blocks in this epoch"
+	fi
+	
 else
-	echo -e "Your Min-Possible Skiprate is ${RED}$(bc<<<"scale=2;${SKIPPED_COUNT:-0}*100/${ALL_SLOTS:-1}")%${NOCOLOR} (if all remaining slots will be done)"
+	echo -e "${LIGHTPURPLE}This node don't have blocks in this epoch${NOCOLOR}"
 fi
 
-#max-skip
-if (( $(bc<<<"scale=2;(${ALL_SLOTS:-0}-${NON_SKIPPED_COUNT:-0})*100/${ALL_SLOTS:-1} <= ${CLUSTER_SKIP:-0}+30") )); then
-	echo -e "Your Max-Possible Skiprate is ${GREEN}$(bc<<<"scale=2;(${ALL_SLOTS:-0}-${NON_SKIPPED_COUNT:-0})*100/${ALL_SLOTS:-1}")%${NOCOLOR} (if all remaining slots will be skipped)"
-else
-	echo -e "Your Max-Possible Skiprate is ${RED}$(bc<<<"scale=2;(${ALL_SLOTS:-0}-${NON_SKIPPED_COUNT:-0})*100/${ALL_SLOTS:-1}")%${NOCOLOR} (if all remaining slots will be skipped)"
-fi
-
-
-
-echo -e "${CYAN}"
-echo -e "Block Production ${NOCOLOR}"
-
-if (( $(bc<<<"scale=2;${COMPLETED_SLOTS1:-0} > 0"))); then
-	echo -e "Last Block: ${COLOR_LAST_BLOCK}${LAST_BLOCK} ${LAST_BLOCK_STATUS}${NOCOLOR}"
-else
-	echo -e "This node did not produce any blocks yet"
-fi
-
-if (( $(bc<<<"scale=2;${REMAINING_SLOTS1:-0} > 0"))); then
-	echo -e "Nearest Slots (4 blocks each):"
-	echo -e "${GREEN}${NEAREST_SLOTS}${NOCOLOR}"
-else
-	echo -e "This node will not have new blocks in this epoch"
-fi
 
 echo -e "${CYAN}"
 echo -e "Last Rewards ${NOCOLOR}"
-echo -e "${LAST_REWARDS}"
+echo -e "${LAST_REWARDS:-${LIGHTPURPLE}No rewards yet ${NOCOLOR}}"
 
 echo -e "${NOCOLOR}"
 
