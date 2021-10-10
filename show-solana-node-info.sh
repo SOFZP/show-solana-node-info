@@ -136,19 +136,19 @@ SFDP=`solana-foundation-delegation-program status ${THIS_SOLANA_ADRESS} | grep -
 
 NODE_WITHDRAW_AUTHORITY=`solana ${SOLANA_CLUSTER} vote-account ${YOUR_VOTE_ACCOUNT} | grep 'Withdraw' | awk '{print $NF}'`
 
-TOTAL_ACTIVE_STAKE=`solana ${SOLANA_CLUSTER} stakes ${YOUR_VOTE_ACCOUNT} | grep 'Active Stake' | sed 's/Active Stake: //g' | sed 's/ SOL//g' | awk '{n += $1}; END{print n}'`
+TOTAL_ACTIVE_STAKE=`solana ${SOLANA_CLUSTER} stakes ${YOUR_VOTE_ACCOUNT} | grep 'Active Stake' | sed 's/Active Stake: //g' | sed 's/ SOL//g' | awk '{n += $1}; END{print n}' | bc`
 TOTAL_STAKE_COUNT=`solana ${SOLANA_CLUSTER} stakes ${YOUR_VOTE_ACCOUNT} | grep 'Active Stake' | sed 's/Active Stake: //g' | sed 's/ SOL//g' | grep '' -c`
 
-ACTIVATING_STAKE=`solana ${SOLANA_CLUSTER} stakes ${YOUR_VOTE_ACCOUNT} | grep 'Activating Stake: ' | sed 's/Activating Stake: //g' | sed 's/ SOL//g' | awk '{n += $1}; END{print n}'`
+ACTIVATING_STAKE=`solana ${SOLANA_CLUSTER} stakes ${YOUR_VOTE_ACCOUNT} | grep 'Activating Stake: ' | sed 's/Activating Stake: //g' | sed 's/ SOL//g' | awk '{n += $1}; END{print n}' | bc`
 ACTIVATING_STAKE_COUNT=`solana ${SOLANA_CLUSTER} stakes ${YOUR_VOTE_ACCOUNT} | grep 'Activating Stake: ' | sed 's/Activating Stake: //g' | sed 's/ SOL//g' | grep '' -c`
-DEACTIVATING_STAKE=`solana ${SOLANA_CLUSTER} stakes ${YOUR_VOTE_ACCOUNT} | grep -B1 -i 'deactivates' | grep 'Active Stake' | sed 's/Active Stake: //g' | sed 's/ SOL//g' | awk '{n += $1}; END{print n}'`
+DEACTIVATING_STAKE=`solana ${SOLANA_CLUSTER} stakes ${YOUR_VOTE_ACCOUNT} | grep -B1 -i 'deactivates' | grep 'Active Stake' | sed 's/Active Stake: //g' | sed 's/ SOL//g' | awk '{n += $1}; END{print n}' | bc`
 DEACTIVATING_STAKE_COUNT=`solana ${SOLANA_CLUSTER} stakes ${YOUR_VOTE_ACCOUNT} | grep -B1 -i 'deactivates' | grep 'Active Stake' | sed 's/Active Stake: //g' | sed 's/ SOL//g' | grep '' -c`
 
-NO_MOVING_STAKE=`echo "${TOTAL_ACTIVE_STAKE:-0} ${DEACTIVATING_STAKE:-0}" | awk '{print $1 - $2}'`
+NO_MOVING_STAKE=`echo "${TOTAL_ACTIVE_STAKE:-0} ${DEACTIVATING_STAKE:-0}" | awk '{print $1 - $2}' | bc`
 
 TOTAL_ACTIVE_STAKE_COUNT=`echo "${TOTAL_STAKE_COUNT:-0} ${ACTIVATING_STAKE_COUNT:-0}" | awk '{print $1 - $2}'`
 
-BOT_ACTIVE_STAKE=`solana ${SOLANA_CLUSTER} stakes ${YOUR_VOTE_ACCOUNT} | grep -B7 -E "mvines|mpa4abUk" | grep 'Active Stake' | sed 's/Active Stake: //g' | sed 's/ SOL//g' | awk '{n += $1}; END{print n}'`
+BOT_ACTIVE_STAKE=`solana ${SOLANA_CLUSTER} stakes ${YOUR_VOTE_ACCOUNT} | grep -B7 -E "mvines|mpa4abUk" | grep 'Active Stake' | sed 's/Active Stake: //g' | sed 's/ SOL//g' | awk '{n += $1}; END{print n}' | bc`
 BOT_ACTIVE_STAKE_CLR=`echo -e "${BOT_ACTIVE_STAKE:-0}" | awk '{if(NR=0) print 0; else print'} | awk '{ if ($1 > 5) print gr$1" SOL"nc; else print rd$1" SOL"nc; fi }' gr=$GREEN rd=$RED nc=$NOCOLOR`
 BOT_ACTIVE_STAKE_COUNT=`solana ${SOLANA_CLUSTER} stakes ${YOUR_VOTE_ACCOUNT} | grep -B7 -E "mvines|mpa4abUk" | grep 'Active Stake' | sed 's/Active Stake: //g' | sed 's/ SOL//g' | grep '' -c`
 
@@ -156,7 +156,7 @@ SELF_ACTIVE_STAKE=`solana ${SOLANA_CLUSTER} stakes ${YOUR_VOTE_ACCOUNT} | grep -
 SELF_ACTIVE_STAKE_CLR=`echo -e "${SELF_ACTIVE_STAKE:-0}" | awk '{if(NR=0) print 0; else print'} | awk '{ if ($1 >= 100) print gr$1" SOL"nc; else print rd$1" SOL"nc; fi }' gr=$GREEN rd=$RED nc=$NOCOLOR`
 SELF_ACTIVE_STAKE_COUNT=`solana ${SOLANA_CLUSTER} stakes ${YOUR_VOTE_ACCOUNT} | grep -B7 'Withdraw Authority: '${NODE_WITHDRAW_AUTHORITY} | grep 'Active Stake' | sed 's/Active Stake: //g' | sed 's/ SOL//g' | bc | grep '' -c`
 
-OTHER_ACTIVE_STAKE=`echo "${TOTAL_ACTIVE_STAKE:-0} ${BOT_ACTIVE_STAKE:-0} ${SELF_ACTIVE_STAKE:-0}" | awk '{print $1 - $2 - $3}'`
+OTHER_ACTIVE_STAKE=`echo "${TOTAL_ACTIVE_STAKE:-0} ${BOT_ACTIVE_STAKE:-0} ${SELF_ACTIVE_STAKE:-0}" | awk '{print $1 - $2 - $3}' | bc`
 OTHER_ACTIVE_STAKE_COUNT=`echo "${TOTAL_ACTIVE_STAKE_COUNT:-0} ${BOT_ACTIVE_STAKE_COUNT:-0} ${SELF_ACTIVE_STAKE_COUNT:-0}" | awk '{print $1 - $2 - $3}'`
 
 IDACC_BALANCE=`solana ${SOLANA_CLUSTER} balance ${THIS_SOLANA_ADRESS} | sed 's/ SOL//g' `
@@ -165,7 +165,9 @@ VOTEACC_BALANCE=`solana ${SOLANA_CLUSTER} balance ${YOUR_VOTE_ACCOUNT}`
 IS_DELINKED=`solana ${SOLANA_CLUSTER} validators | grep ⚠️ | if (grep ${THIS_SOLANA_ADRESS} -c)>0; then echo -e "WARNING: ${RED}THIS NODE IS DELINKED\n\rconsider to check catchup, network connection and/or messages from your datacenter${NOCOLOR}"; else >/dev/null; fi`
 
 YOUR_CREDITS=`solana ${SOLANA_CLUSTER} vote-account ${YOUR_VOTE_ACCOUNT} | grep -A 4 History | grep -A 2 epoch | grep credits/slots | cut -d ' ' -f 4 | cut -d '/' -f 1 | bc`
-ALL_CLUSTER_CREDITS_LIST=`solana ${SOLANA_CLUSTER} validators | grep -A 999999999 Skip | grep -B 999999999 Skip | grep -v Skip | sed 's/(/ /g'| sed 's/)/ /g' | tr -s ' ' | sed 's/ /\n\r/g' | grep -v % | grep -i -v [a-z⚠️-] | egrep '^.{2,8}$' | grep -v -E '\.+[[:digit:]]\.+[[:digit:]]+$' | grep -v -E '^.{2,3}$'`
+YOUR_CREDITS_PLACE=`solana validators ${SOLANA_CLUSTER} --sort=credits -r -n | grep ${THIS_SOLANA_ADRESS} | sed 's/⚠️/ /g' | awk '{print ($1)}' | sed 's/[[:blank:]]*$//'`
+ALL_CREDITS_PLACES=`solana validators ${SOLANA_CLUSTER} --sort=credits -r -n | grep -A 999999999 Skip | grep -B 999999999 Skip | grep -v Skip | sed 's/[()⚠️]/ /g' | tr -s ' ' | tac | egrep -m 1 . | awk {'print $1'}`
+ALL_CLUSTER_CREDITS_LIST=`solana ${SOLANA_CLUSTER} validators | grep -A 999999999 Skip | grep -B 999999999 Skip | grep -v Skip | sed 's/(/ /g'| sed 's/)/ /g' | tr -s ' ' | sed 's/ /\n\r/g' | grep -v % | grep -i -v [a-z⚠️-] | egrep '^.{2,7}$' | grep -v -E '\.+[[:digit:]]\.+[[:digit:]]+$' | grep -v -E '^.{2,3}$'`
 SUM_CLUSTER_CREDITS=`echo -e "${ALL_CLUSTER_CREDITS_LIST}" | awk '{n += $1}; END{print n}'`
 COUNT_CLUSTER_VALIDATORS=`echo -e "${ALL_CLUSTER_CREDITS_LIST}" | wc -l | bc`
 CLUSTER_CREDITS=`echo -e "$SUM_CLUSTER_CREDITS" "$COUNT_CLUSTER_VALIDATORS" | awk '{print ($1/$2)}' `
@@ -186,6 +188,7 @@ YOUR_SKIPRATE=`solana ${SOLANA_CLUSTER} -v block-production | grep ${THIS_SOLANA
 
 
 TIME_NOW=`see_shedule ${THIS_SOLANA_ADRESS} ${SOLANA_CLUSTER} | sed -n -e 1p`
+END_OF_EPOCH=`see_shedule ${THIS_SOLANA_ADRESS} ${SOLANA_CLUSTER} | tail -n1 | sed -r 's/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g' | sed 's/End: /End of epoch:/g' | tr -s ' '`
 NEAREST_SLOTS=`see_shedule ${THIS_SOLANA_ADRESS} ${SOLANA_CLUSTER} | grep -m1 -A11 "new>" | sed -n -e 1p -e 5p -e 9p | sed 's/End: /End of epoch:/g' | sed 's/new> //g' | tr -s ' ' | sed -r 's/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g'`
 LAST_BLOCK=`see_shedule ${THIS_SOLANA_ADRESS} ${SOLANA_CLUSTER} | grep "old<" | tail -n1 | sed 's/old< //g' | sed -r 's/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g'`
 LAST_BLOCK_STATUS=`solana ${SOLANA_CLUSTER} -v block-production | grep ${THIS_SOLANA_ADRESS} | tail -n2 | tr -s ' ' | sed 's/ /\n\r/g' | sed '/^$/d' | grep -i 'skipped' -c | awk {'if ($1==0) print "DONE"; else print "SKIPPED"'}`
@@ -209,6 +212,7 @@ echo -e "Epoch Progress ${NOCOLOR}"
 echo "$EPOCH_INFO" | grep 'Epoch: '
 echo "$EPOCH_INFO" | grep 'Epoch Completed Percent'
 echo "$EPOCH_INFO" | grep 'Epoch Completed Time'
+echo -e "${NOCOLOR}$END_OF_EPOCH ${NOCOLOR}"
 
 
 echo -e "${CYAN}"
@@ -239,21 +243,22 @@ echo -e "${SFDP}"
 echo -e "${CYAN}"
 echo -e "Vote-Credits ${NOCOLOR}"
 
-echo -e "Average cluster credits: ${CLUSTER_CREDITS} (minus grace 35%: $(bc<<<"scale=2;${CLUSTER_CREDITS}*0.65"))"
+echo -e "Average cluster credits: ${CLUSTER_CREDITS:-0} (minus grace 35%: $(bc<<<"scale=2;${CLUSTER_CREDITS:-0}*0.65"))"
 
-if (( $(bc<<<"scale=0;${YOUR_CREDITS} >= ${CLUSTER_CREDITS}*0.65"))); then
+if (( $(bc<<<"scale=0;${YOUR_CREDITS:-0} >= ${CLUSTER_CREDITS:-0}*0.65"))); then
   echo -e "${GREEN}Your credits: ${YOUR_CREDITS} (Good)${NOCOLOR}"
 else
   echo -e "${RED}Your credits: ${YOUR_CREDITS} (Bad)${NOCOLOR}"
 fi
+echo -e "Your epoch credit rating: # ${YOUR_CREDITS_PLACE}/ ${ALL_CREDITS_PLACES} (${COUNT_CLUSTER_VALIDATORS} with non-zero credits)"
 
 
 echo -e "${CYAN}"
 echo -e "Skip Rate ${NOCOLOR}"
 
-echo -e "Average cluster skiprate: ${CLUSTER_SKIP}% (plus grace 30%: $(bc<<<"scale=2;${CLUSTER_SKIP}+30")%)"
+echo -e "Average cluster skiprate: ${CLUSTER_SKIP}% (plus grace 30%: $(bc<<<"scale=2;${CLUSTER_SKIP:-0}+30")%)"
 
-if (( $(bc<<<"scale=2;${YOUR_SKIPRATE:-0} <= ${CLUSTER_SKIP}+30"))); then
+if (( $(bc<<<"scale=2;${YOUR_SKIPRATE:-0} <= ${CLUSTER_SKIP:-0}+30"))); then
   echo -e "${GREEN}Your skiprate: ${YOUR_SKIPRATE:-0}% (Good) - Done: ${NON_SKIPPED_COUNT:-0}, Skipped: ${SKIPPED_COUNT:-0}${NOCOLOR}"
 else
   echo -e "${RED}Your skiprate: ${YOUR_SKIPRATE:-0}% (Bad) - Done: ${NON_SKIPPED_COUNT:-0}, Skipped: ${SKIPPED_COUNT:-0}${NOCOLOR}"
@@ -263,17 +268,17 @@ echo "Your Slots ${COMPLETED_SLOTS1}/${ALL_SLOTS} (${REMAINING_SLOTS1} remaining
 
 
 #min-skip
-if (( $(bc<<<"scale=2;${SKIPPED_COUNT:-0}*100/${ALL_SLOTS} <= ${CLUSTER_SKIP}+30") )); then
-	echo -e "Your Min-Possible Skiprate is ${GREEN}$(bc<<<"scale=2;${SKIPPED_COUNT:-0}*100/${ALL_SLOTS}")%${NOCOLOR} (if all remaining slots will be done)"
+if (( $(bc<<<"scale=2;${SKIPPED_COUNT:-0}*100/${ALL_SLOTS:-1} <= ${CLUSTER_SKIP:-0}+30") )); then
+	echo -e "Your Min-Possible Skiprate is ${GREEN}$(bc<<<"scale=2;${SKIPPED_COUNT:-0}*100/${ALL_SLOTS:-1}")%${NOCOLOR} (if all remaining slots will be done)"
 else
-	echo -e "Your Min-Possible Skiprate is ${RED}$(bc<<<"scale=2;${SKIPPED_COUNT:-0}*100/${ALL_SLOTS}")%${NOCOLOR} (if all remaining slots will be done)"
+	echo -e "Your Min-Possible Skiprate is ${RED}$(bc<<<"scale=2;${SKIPPED_COUNT:-0}*100/${ALL_SLOTS:-1}")%${NOCOLOR} (if all remaining slots will be done)"
 fi
 
 #max-skip
-if (( $(bc<<<"scale=2;(${ALL_SLOTS}-${NON_SKIPPED_COUNT:-0})*100/${ALL_SLOTS} <= ${CLUSTER_SKIP}+30") )); then
-	echo -e "Your Max-Possible Skiprate is ${GREEN}$(bc<<<"scale=2;(${ALL_SLOTS}-${NON_SKIPPED_COUNT:-0})*100/${ALL_SLOTS}")%${NOCOLOR} (if all remaining slots will be skipped)"
+if (( $(bc<<<"scale=2;(${ALL_SLOTS:-0}-${NON_SKIPPED_COUNT:-0})*100/${ALL_SLOTS:-1} <= ${CLUSTER_SKIP:-0}+30") )); then
+	echo -e "Your Max-Possible Skiprate is ${GREEN}$(bc<<<"scale=2;(${ALL_SLOTS:-0}-${NON_SKIPPED_COUNT:-0})*100/${ALL_SLOTS:-1}")%${NOCOLOR} (if all remaining slots will be skipped)"
 else
-	echo -e "Your Max-Possible Skiprate is ${RED}$(bc<<<"scale=2;(${ALL_SLOTS}-${NON_SKIPPED_COUNT:-0})*100/${ALL_SLOTS}")%${NOCOLOR} (if all remaining slots will be skipped)"
+	echo -e "Your Max-Possible Skiprate is ${RED}$(bc<<<"scale=2;(${ALL_SLOTS:-0}-${NON_SKIPPED_COUNT:-0})*100/${ALL_SLOTS:-1}")%${NOCOLOR} (if all remaining slots will be skipped)"
 fi
 
 
@@ -281,13 +286,13 @@ fi
 echo -e "${CYAN}"
 echo -e "Block Production ${NOCOLOR}"
 
-if (( $(bc<<<"scale=2;${COMPLETED_SLOTS1} > 0"))); then
+if (( $(bc<<<"scale=2;${COMPLETED_SLOTS1:-0} > 0"))); then
 	echo -e "Last Block: ${COLOR_LAST_BLOCK}${LAST_BLOCK} ${LAST_BLOCK_STATUS}${NOCOLOR}"
 else
 	echo -e "This node did not produce any blocks yet"
 fi
 
-if (( $(bc<<<"scale=2;${REMAINING_SLOTS1} > 0"))); then
+if (( $(bc<<<"scale=2;${REMAINING_SLOTS1:-0} > 0"))); then
 	echo -e "Nearest Slots (4 blocks each):"
 	echo -e "${GREEN}${NEAREST_SLOTS}${NOCOLOR}"
 else
