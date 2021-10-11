@@ -119,6 +119,13 @@ SOLANA_CLUSTER=' '${2:-$DEFAULT_CLUSTER}' '
 EPOCH_INFO=`solana ${SOLANA_CLUSTER} epoch-info`
 SOLANA_VALIDATORS=`solana ${SOLANA_CLUSTER} validators`
 YOUR_VOTE_ACCOUNT=`echo -e "${SOLANA_VALIDATORS}" | grep ${THIS_SOLANA_ADRESS} | sed 's/  */ /g' | cut -d ' ' -f 3`
+
+if [[ ${YOUR_VOTE_ACCOUNT} == "" ]]; then
+	echo -e "${RED}${THIS_SOLANA_ADRESS} is not the node account!"
+	echo -e "<VOTE_ACCOUNT_ADDRESS> for it does not exist!${NOCOLOR}"
+	exit 1
+fi
+
 THIS_SOLANA_VALIDATOR_INFO=`solana ${SOLANA_CLUSTER} validator-info get | awk '$0 ~ sadddddr {do_print=1} do_print==1 {print} NF==0 {do_print=0}' sadddddr=$THIS_SOLANA_ADRESS`
 NODE_NAME=`echo -e "${THIS_SOLANA_VALIDATOR_INFO}" | grep 'Name: ' | sed 's/Name//g' | tr -s ' '`
 SOLANA_VERSION=`echo -e "${SOLANA_VALIDATORS}" | grep -A 999999999 Skip | grep -B 999999999 Skip | grep -v Skip | grep ${THIS_SOLANA_ADRESS} | sed 's/(/ /g'| sed 's/)/ /g' | tr -s ' ' | sed 's/ /\n/g' | grep -v % | grep -i -v [a-z⚠-] | egrep '\.+[[:digit:]]\.+[[:digit:]]+$' | awk '{print ($1)}'`
